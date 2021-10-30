@@ -1,38 +1,35 @@
 package chat_server;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
-import java.nio.charset.StandardCharsets;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
 
 public class ClientDialog implements Runnable {
-    final SocketChannel socketChannel;
+    final Socket socket;
+    Logger logger = Logger.getInstance();
 
-    public ClientDialog(SocketChannel socketChannel) {
-        this.socketChannel = socketChannel;
+    public ClientDialog(Socket socket) {
+        this.socket = socket;
     }
 
     @Override
     public void run() {
-        try{
-            // Определяем буфер для получения данных
-            final ByteBuffer inputBuffer = ByteBuffer.allocate(2 << 10);
-            while (socketChannel.isConnected()) {
-                // читаем данные из канала в буфер
-                int bytesCount = socketChannel.read(inputBuffer);
-                System.out.println("сервер прочитал");
-                // если из потока читать нельзя, перестаем работать с этим клиентом
-                if (bytesCount == -1) {
-                    break;
+        try (PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+            String line;
+            while (true) {
+                if ((line = in.readLine()) != null){
+                    // Выход если от клиента получили end
+                    if (line.equals("/exit")) {
+                        break;
+                    }
+                    logger.log(line);
+                    //вычисляем и пишем ответ
+                    out.println("Эхо от сервера - " + line);
                 }
-                //  получаем переданную от клиента строку в нужной кодировке и очищаем буфер
-                final String msg = new String(inputBuffer.array(), 0, bytesCount, StandardCharsets.UTF_8);
-                inputBuffer.clear();
-                if ("end".equals(msg)) {
-                    return;
-                }
-                //отправляем сообщение обратно
-                socketChannel.write(ByteBuffer.wrap(("Server ЭХО - " + msg).getBytes(StandardCharsets.UTF_8)));
+
             }
         } catch (IOException e) {
             e.printStackTrace();
