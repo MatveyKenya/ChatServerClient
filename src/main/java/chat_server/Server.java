@@ -1,17 +1,23 @@
 package chat_server;
 
+import common.Logger;
+import common.SettingsReader;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.ArrayList;
 
 public class Server{
-    final int PORT;
+    final private int PORT;
+    final private String NAME_LOG = "log_Server.txt";
+    final private String FILE_SETTINGS = "settingsServer.txt";
+    final private ArrayList<ClientDialog> clients = new ArrayList<>();// список клиентов, которые будут подключаться к серверу
+    final Logger logger;
 
-    // todo Определить параметры подключения в конструкторе Читать из файла
     public Server() {
-        PORT = 23334;
+        PORT = Integer.parseInt(new SettingsReader(FILE_SETTINGS).getSetting("port"));
+        logger = Logger.getInstance(NAME_LOG);
     }
 
     public static void main(String[] args) {
@@ -19,22 +25,37 @@ public class Server{
     }
 
     public void start() {
-        Logger logger = Logger.getInstance();
-        //ExecutorService poolExecutor = Executors.newCachedThreadPool();
+        Socket socket;
         try (ServerSocket servSocket = new ServerSocket(PORT)){
-            //  Ждем подключения клиента и отправляем в новый поток для дальнейшей работы
+            logger.logTime("Сервер запущен");
             while (true){
-                logger.log("Ждем клиента...");
-                try (Socket socket = servSocket.accept()){
-                    logger.log("отправляем в отдельный поток клиента - " + socket);
-                    //poolExecutor.execute(new ClientDialog(socket));
-                    new Thread(new ClientDialog(socket)).start();
+                logger.logTime("Ждем клиента...");
+                try {
+                    socket = servSocket.accept();//  Ждем подключения клиента и отправляем в новый поток для дальнейшей работы
+                    logger.logTime("Отправляем в отдельный поток клиента - " + socket);
+                    ClientDialog client = new ClientDialog(socket, this);
+                    clients.add(client);
+                    new Thread(client).start();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
-
         } catch (IOException e){
             e.printStackTrace();
         }
+    }
+
+    // отправляем сообщение всем клиентам
+    public void sendMessageToAllClients(String msg) {
+        logger.logTime(msg);
+        for (ClientDialog o : clients) {
+            o.sendMsg(Logger.timeNow() + msg);
+        }
+    }
+
+    // удаляем клиента из коллекции при выходе из чата
+    public void removeClient(ClientDialog client) {
+        clients.remove(client);
     }
 
 }
