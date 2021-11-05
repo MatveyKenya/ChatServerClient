@@ -22,10 +22,6 @@ public class Client{
         PORT = Integer.parseInt(sr.getSetting("port"));
     }
 
-    public static void main(String[] args) {
-        new Client("Dimasik").start();
-    }
-
     public void start() {
         try (// Определяем сокет сервера
              Socket socket = new Socket(HOSTNAME, PORT);

@@ -1,11 +1,13 @@
 package chat_server;
 
 import common.Logger;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+
 
 public class ClientDialog implements Runnable {
     final private Socket socket;
@@ -29,11 +31,8 @@ public class ClientDialog implements Runnable {
             this.out = out;
             String msg;
             server.sendMessageToAllClients("Новый участник вошёл в чат! Всего в чате = " + clients_count);
-            while (true) {
-                if (socket.isClosed()){
-                    break;
-                }
-                if (in.ready()){
+            while (!socket.isClosed()) {
+                if (in.ready()) {
                     msg = in.readLine();
                     server.sendMessageToAllClients(msg);
                 }

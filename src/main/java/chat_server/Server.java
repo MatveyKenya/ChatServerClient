@@ -8,6 +8,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 
+
 public class Server{
     final private int PORT;
     final private String NAME_LOG = "log_Server.txt";
@@ -18,10 +19,6 @@ public class Server{
     public Server() {
         PORT = Integer.parseInt(new SettingsReader(FILE_SETTINGS).getSetting("port"));
         logger = Logger.getInstance(NAME_LOG);
-    }
-
-    public static void main(String[] args) {
-        new Server().start();
     }
 
     public void start() {
