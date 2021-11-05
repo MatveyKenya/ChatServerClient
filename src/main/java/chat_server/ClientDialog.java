@@ -34,6 +34,9 @@ public class ClientDialog implements Runnable {
             while (!socket.isClosed()) {
                 if (in.ready()) {
                     msg = in.readLine();
+                    if (msg.equals("//")){
+                        break;
+                    }
                     server.sendMessageToAllClients(msg);
                 }
                 Thread.sleep(100);
